@@ -16,14 +16,22 @@ jobs:
         
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: true  # 保留凭据以便后续git操作使用
           fetch-depth: 0
-          ref: master  # 明确指定检出master分支
+          ref: master
+          token: ${{ secrets.GITHUB_TOKEN }}  # 明确提供令牌
 
+      - name: 配置Git身份和远程仓库
+        run: |
+          git config --global user.email "erickyknoff@gmail.com"
+          git config --global user.name "SUWJTech"
+          # 重新配置远程仓库URL，包含身份验证信息
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/SUWJTech/AutoCommit.git
+          
       - name: 确保本地分支与远程同步
         run: |
           git fetch origin master
-          git reset --hard origin/master  # 强制将本地分支重置为远程master状态
+          git reset --hard origin/master
           
       - name: Modify last update
         run: |
@@ -32,8 +40,6 @@ jobs:
           
       - name: Commit changes
         run: |
-          git config --local user.email "erickyknoff@gmail.com"
-          git config --local user.name "SUWJTech"
           git add -A
           
           arr[0]="chore(bot): 😂 auto commit"
@@ -51,9 +57,6 @@ jobs:
           
           git commit -m "${arr[$rand]}" || echo "没有需要提交的更改"
           
-      - name: 再次拉取以防冲突
-        run: git pull --rebase origin master || git rebase --abort
-        
       - name: GitHub Push
         uses: ad-m/github-push-action@v0.6.0
         with:
