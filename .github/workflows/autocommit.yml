@@ -5,7 +5,7 @@ on:
     branches:
       - master
   schedule:
-    - cron: "0 0,6,12 * * *"
+    - cron: "0 0,6,12 * * *" # 每天 0点、6点、12点 自动执行
 
 jobs:
   auto_commit:
@@ -37,6 +37,7 @@ jobs:
       - name: 提交更改
         run: |
           git add LAST_UPDATED
+          # 随机提交信息
           messages=("😂" "😱" "👿" "💩" "🙏" "🙈" "🐐" "🤖" "🟩" "👻")
           emoji=${messages[$RANDOM % ${#messages[@]}]}
           git commit -m "chore(bot): $emoji auto commit" || echo "无更改可提交"
