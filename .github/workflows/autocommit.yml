@@ -18,10 +18,11 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 配置Git
+      - name: 配置 Git
         run: |
           git config --global user.email "erickyknoff@gmail.com"
           git config --global user.name "SUWJTech"
+          # 远程地址带 token，避免鉴权问题
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/SUWJTech/AutoCommit.git
 
       - name: 强制同步远程最新代码
@@ -36,9 +37,10 @@ jobs:
       - name: 提交更改
         run: |
           git add LAST_UPDATED
+          # 随机 emoji 提交信息
           messages=("😂" "😱" "👿" "💩" "🙏" "🙈" "🐐" "🤖" "🟩" "👻")
           emoji=${messages[$RANDOM % ${#messages[@]}]}
           git commit -m "chore(bot): $emoji auto commit" || echo "无更改可提交"
 
-      - name: 推送更改
+      - name: 推送更改（强制覆盖远程）
         run: git push origin master -f
