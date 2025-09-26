@@ -11,55 +11,42 @@ jobs:
   auto_commit:
     runs-on: ubuntu-latest
     steps:
-      - name: DEBUG 
-        run: echo "::debug::Ref = ${{github.ref}}"
-        
-      - uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
         with:
-          persist-credentials: true  # 保留凭据以便后续git操作使用
-          fetch-depth: 0
           ref: master
-          token: ${{ secrets.GITHUB_TOKEN }}  # 明确提供令牌
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 配置Git身份和远程仓库
+      - name: 配置Git
         run: |
           git config --global user.email "erickyknoff@gmail.com"
           git config --global user.name "SUWJTech"
-          # 重新配置远程仓库URL，包含身份验证信息
+          # 配置远程仓库带令牌
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/SUWJTech/AutoCommit.git
-          
-      - name: 确保本地分支与远程同步
+
+      - name: 强制同步远程最新代码
         run: |
-          git fetch origin master
+          git fetch --all
           git reset --hard origin/master
-          
-      - name: Modify last update
+          git pull origin master --no-rebase
+
+      - name: 修改更新时间文件
         run: |
-          d=`date '+%Y-%m-%dT%H:%M:%SZ'`
-          echo $d > LAST_UPDATED
-          
-      - name: Commit changes
+          date '+%Y-%m-%dT%H:%M:%SZ' > LAST_UPDATED
+
+      - name: 提交更改
         run: |
-          git add -A
+          git add LAST_UPDATED
           
-          arr[0]="chore(bot): 😂 auto commit"
-          arr[1]="chore(bot): 😱 auto commit"
-          arr[2]="chore(bot): 👿 auto commit"
-          arr[3]="chore(bot): 💩 auto commit"
-          arr[4]="chore(bot): 🙏 auto commit"
-          arr[5]="chore(bot): 🙈 auto commit"
-          arr[6]="chore(bot): 🐐 auto commit"
-          arr[7]="chore(bot): 🤖 auto commit"
-          arr[8]="chore(bot): 🟩 auto commit"
-          arr[9]="chore(bot): 👻 auto commit"
-          
-          rand=$[$RANDOM % ${#arr[@]}]
-          
-          git commit -m "${arr[$rand]}" || echo "没有需要提交的更改"
-          
-      - name: GitHub Push
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          directory: "."
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: master
+          # 随机提交信息
+          messages=("😂" "😱" "👿" "💩" "🙏" "🙈" "🐐" "🤖" "🟩" "👻")
+          emoji=${messages[$RANDOM % ${#messages[@]}]}
+          git commit -m "chore(bot): $emoji auto commit" || echo "无更改可提交"
+
+      - name: 再次拉取以防最后一刻的冲突
+        run: git pull origin master --no-rebase
+
+      - name: 直接使用git push推送（替代action）
+        run: git push origin master
+
