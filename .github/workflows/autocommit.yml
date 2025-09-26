@@ -1,13 +1,11 @@
 name: Auto commit
 
 on:
-
   push:
     branches:
       - master
-      
   schedule:
-  - cron: "0 0,6,12 * * *" # See https://crontab.guru/#0_7,9,11_*_*_1,3
+    - cron: "0 0,6,12 * * *" # 每天0点、6点、12点运行
 
 jobs:
   auto_commit:
@@ -15,11 +13,15 @@ jobs:
     steps:
       - name: DEBUG 
         run: echo "::debug::Ref = ${{github.ref}}"
-      - uses: actions/checkout@v3      
+        
+      - uses: actions/checkout@v4  # 更新到最新版本的checkout
         with:
-         persist-credentials: false
-         fetch-depth: 0
+          persist-credentials: false
+          fetch-depth: 0  # 获取完整历史
 
+      - name: 拉取远程最新更改
+        run: git pull origin master --rebase  # 添加拉取和变基步骤
+        
       - name: Modify last update
         run: |
           d=`date '+%Y-%m-%dT%H:%M:%SZ'`
@@ -31,6 +33,7 @@ jobs:
           git config --local user.name "SUWJTech"
           git add -A
           
+          # 随机提交信息数组
           arr[0]="chore(bot): 😂 auto commit"
           arr[1]="chore(bot): 😱 auto commit"
           arr[2]="chore(bot): 👿 auto commit"
@@ -44,10 +47,12 @@ jobs:
           
           rand=$[$RANDOM % ${#arr[@]}]
           
-          git commit -m "${arr[$rand]}"
+          # 只有在有更改时才提交
+          git commit -m "${arr[$rand]}" || echo "没有需要提交的更改"
           
       - name: GitHub Push
         uses: ad-m/github-push-action@v0.6.0
         with:
           directory: "."
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master  # 明确指定推送的分支
