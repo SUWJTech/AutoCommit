@@ -5,7 +5,7 @@ on:
     branches:
       - master
   schedule:
-    - cron: "0 0,6,12 * * *" # 每天0点、6点、12点运行
+    - cron: "0 0,6,12 * * *"
 
 jobs:
   auto_commit:
@@ -14,14 +14,17 @@ jobs:
       - name: DEBUG 
         run: echo "::debug::Ref = ${{github.ref}}"
         
-      - uses: actions/checkout@v4  # 更新到最新版本的checkout
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          fetch-depth: 0  # 获取完整历史
+          fetch-depth: 0
+          ref: master  # 明确指定检出master分支
 
-      - name: 拉取远程最新更改
-        run: git pull origin master --rebase  # 添加拉取和变基步骤
-        
+      - name: 确保本地分支与远程同步
+        run: |
+          git fetch origin master
+          git reset --hard origin/master  # 强制将本地分支重置为远程master状态
+          
       - name: Modify last update
         run: |
           d=`date '+%Y-%m-%dT%H:%M:%SZ'`
@@ -33,7 +36,6 @@ jobs:
           git config --local user.name "SUWJTech"
           git add -A
           
-          # 随机提交信息数组
           arr[0]="chore(bot): 😂 auto commit"
           arr[1]="chore(bot): 😱 auto commit"
           arr[2]="chore(bot): 👿 auto commit"
@@ -47,12 +49,14 @@ jobs:
           
           rand=$[$RANDOM % ${#arr[@]}]
           
-          # 只有在有更改时才提交
           git commit -m "${arr[$rand]}" || echo "没有需要提交的更改"
           
+      - name: 再次拉取以防冲突
+        run: git pull --rebase origin master || git rebase --abort
+        
       - name: GitHub Push
         uses: ad-m/github-push-action@v0.6.0
         with:
           directory: "."
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: master  # 明确指定推送的分支
+          branch: master
