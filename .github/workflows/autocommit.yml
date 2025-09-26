@@ -22,14 +22,12 @@ jobs:
         run: |
           git config --global user.email "erickyknoff@gmail.com"
           git config --global user.name "SUWJTech"
-          # 配置远程仓库带令牌
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/SUWJTech/AutoCommit.git
 
       - name: 强制同步远程最新代码
         run: |
           git fetch --all
           git reset --hard origin/master
-          git pull origin master --no-rebase
 
       - name: 修改更新时间文件
         run: |
@@ -38,15 +36,9 @@ jobs:
       - name: 提交更改
         run: |
           git add LAST_UPDATED
-          
-          # 随机提交信息
           messages=("😂" "😱" "👿" "💩" "🙏" "🙈" "🐐" "🤖" "🟩" "👻")
           emoji=${messages[$RANDOM % ${#messages[@]}]}
           git commit -m "chore(bot): $emoji auto commit" || echo "无更改可提交"
 
-      - name: 再次拉取以防最后一刻的冲突
-        run: git pull origin master --no-rebase
-
-      - name: 直接使用git push推送（替代action）
-        run: git push origin master
-
+      - name: 推送更改
+        run: git push origin master -f
