@@ -1,0 +1,44 @@
+name: Auto commit
+
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "0 0,6,12 * * *" # 每天 0点、6点、12点 自动运行
+
+jobs:
+  auto_commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 配置 Git
+        run: |
+          git config --global user.email "erickyknoff@gmail.com"
+          git config --global user.name "SUWJTech"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/SUWJTech/AutoCommit.git
+
+      - name: 同步远程最新代码
+        run: |
+          git fetch origin master
+          git reset --hard origin/master
+
+      - name: 修改更新时间文件
+        run: |
+          date '+%Y-%m-%dT%H:%M:%SZ' > LAST_UPDATED
+
+      - name: 提交更改
+        run: |
+          git add LAST_UPDATED
+          messages=("😂" "😱" "👿" "💩" "🙏" "🙈" "🐐" "🤖" "🟩" "👻")
+          emoji=${messages[$RANDOM % ${#messages[@]}]}
+          git commit -m "chore(bot): $emoji auto commit" || echo "无更改可提交"
+
+      - name: 推送更改（强制覆盖远程）
+        run: git push origin master -f
