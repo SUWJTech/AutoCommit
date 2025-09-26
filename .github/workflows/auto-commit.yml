@@ -5,7 +5,7 @@ on:
     branches:
       - master
   schedule:
-    - cron: "0 0,6,12 * * *" # 每天 0点、6点、12点 自动运行
+    - cron: "0 0,6,12 * * *" # 每天 0点、6点、12点 自动执行
 
 jobs:
   auto_commit:
@@ -40,5 +40,10 @@ jobs:
           emoji=${messages[$RANDOM % ${#messages[@]}]}
           git commit -m "chore(bot): $emoji auto commit" || echo "无更改可提交"
 
+      - name: 拉取最新并合并
+        run: |
+          git fetch origin master
+          git rebase origin/master || git rebase --abort
+
       - name: 推送更改（强制覆盖远程）
-        run: git push origin master -f
+        run: git push origin master --force
